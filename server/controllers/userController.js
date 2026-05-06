@@ -17,7 +17,10 @@ exports.getAllUsers = async (req, res) => {
       query.location = { $regex: location, $options: "i" };
     }
 
-    const users = await User.find(query).skip(offset).limit(limit).select("-password");
+    const users = await User.find(query)
+      .skip(offset)
+      .limit(limit)
+      .select("-password");
     res.status(200).json(users);
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
@@ -36,35 +39,34 @@ exports.getUsersById = async (req, res) => {
   }
 };
 
-exports.getMe = async(req,res)=>{
-  try{
-    const user =await User.findById(req.user.id).select('-password')
-    if(!user){
-      return res.status(404).json({message:'User not found'})
+exports.getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-    res.status(200).json(user)
-  }catch(err){
-    res.status(500).json({message:'Server error',error:err.message})
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
   }
-}
+};
 
-exports.deleteMe = async(req,res)=>{
-  try{
+exports.deleteMe = async (req, res) => {
+  try {
     const user = await User.findByIdAndDelete(req.user.id);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    return res.status(200).json({message:'Account deleted successfully'});
-
-  }catch(err){
-    res.status(500).json({message:'Server error',error:err.message});
+    return res.status(200).json({ message: "Account deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
   }
-}
+};
 
-exports.updateMe = async(req,res)=>{
-  try{
+exports.updateMe = async (req, res) => {
+  try {
     const { name, bio, location, skillsOffered } = req.body;
     const updates = {};
 
@@ -73,21 +75,21 @@ exports.updateMe = async(req,res)=>{
     if (location !== undefined) updates.location = location;
     if (skillsOffered !== undefined) updates.skillsOffered = skillsOffered;
 
-    const updatedUser = await User.findByIdAndUpdate(req.user.id, updates, 
-      { new: true, runValidators: true }).select("-password");
+    const updatedUser = await User.findByIdAndUpdate(req.user.id, updates, {
+      new: true,
+      runValidators: true,
+    }).select("-password");
 
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });
     }
     res.status(200).json(updatedUser);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
   }
-  catch(err){
-    res.status(500).json({message:'Server error',error:err.message});
-  }
-}
+};
 
-
-// For Admin Side Update and Delete 
+// For Admin Side Update and Delete
 
 exports.updateUser = async (req, res) => {
   try {
@@ -113,15 +115,15 @@ exports.updateUser = async (req, res) => {
   }
 };
 
-exports.deleteUser = async(req,res)=>{
-  try{
-    const user = await User.findByIdAndDelete(req.params.id)
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
 
-    if(!user){
-      return res.status(404).json({message:'User not found'})
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-    res.status(200).json({message:'Account deleted successfully'})
-  }catch(err){
-    res.status(500).json({message:'Server error',error:err.message})
+    res.status(200).json({ message: "Account deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
   }
-}
+};
