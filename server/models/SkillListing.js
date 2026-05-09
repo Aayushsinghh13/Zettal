@@ -30,7 +30,7 @@ const skillListingSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
-});
+},{ timestamps: true });
 
 const SkillListing = mongoose.model("SkillListing", skillListingSchema);
 

@@ -2,6 +2,7 @@ const SkillListing = require("../models/SkillListing");
 
 exports.createListing = async (req,res)=>{
     try{
+        
         const { title,description,category,skillName } = req.body;
 
         const listing = await SkillListing.create({
@@ -9,12 +10,12 @@ exports.createListing = async (req,res)=>{
             description,
             category,
             skillName,
-            postedBy:req.user.d,
+            postedBy:req.user.id,
         })
 
         res.status(201).json(listing)
     }catch(err){
-        res.status(500).json({error:'Failed to create listing'})
+        res.status(500).json({message:"Server error",error:err.message})
     }
 }
 
@@ -35,7 +36,7 @@ exports.getAllListings = async (req,res)=>{
             query.skill = { $regex:skill,$options:'i'};
         }
 
-        const listing = (await SkillListing.find(query).skip(offset).limit(limit).populate('postedBy',"name avatar location rating")).sort({createdAt:-1})
+        const listing = await SkillListing.find(query).skip(offset).limit(limit).populate('postedBy',"name avatar location rating").sort('createdAt');
 
         res.status(200).json(listing);
     }
@@ -46,8 +47,9 @@ exports.getAllListings = async (req,res)=>{
 
 exports.getListingsById = async(req,res)=>{
     try{
+        
         const listing = await SkillListing.findById(req.params.id).populate('postedBy',"name avatar location rating")
-
+        
         if(!listing){
             return res.status(404).json({ message:'Listing not found'})
         }
