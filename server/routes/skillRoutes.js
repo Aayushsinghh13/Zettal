@@ -3,14 +3,16 @@ const router = require("express").Router();
 const {
   createListing,
   getAllListings,
-  getListingsById,
+  getListingById,
+  updateListing,
   deleteListing,
 } = require("../controllers/skillController.js");
 const auth = require("../middleware/auth.js");
 
 router.post('/',auth,createListing)
 router.get('/',getAllListings)
-router.get('/:id',getListingsById)
-router.get('/:id',deleteListing)
+router.get('/:id',getListingById)
+router.put('/:id',auth,updateListing) 
+router.delete('/:id',auth,deleteListing)
 
 module.exports = router;
