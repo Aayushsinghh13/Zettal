@@ -45,7 +45,7 @@ exports.getAllListings = async (req,res)=>{
     }
 }
 
-exports.getListingsById = async(req,res)=>{
+exports.getListingById = async(req,res)=>{
     try{
         
         const listing = await SkillListing.findById(req.params.id).populate('postedBy',"name avatar location rating")
@@ -54,6 +54,34 @@ exports.getListingsById = async(req,res)=>{
             return res.status(404).json({ message:'Listing not found'})
         }
         res.status(200).json(listing);
+    }
+    catch(err){
+        res.status(500).json({message:'Server error',error:err.message});
+    }
+}
+
+exports.updateListing = async(req,res)=>{
+    try{
+        const listing = await SkillListing.findById(req.params.id);
+        console.log('req.params.id',req.params.id)
+        console.log('listing',listing)
+
+        if(!listing){
+            return res.status(404).json({message:'Listing not found'})
+        }
+
+        if(listing.postedBy.toString()!==req.params.id){
+            return res.status(404).json({message:"Your are not authorized to update this listing"})
+        }
+
+        const { title,description,category,skillName } = req.body;
+
+        const updatedListing = await SkillListing.findByIdAndUpdate(req.params.id,{
+            title,description,category,skillName
+        },{new:true,runValidators:true}).populate('postedBy',"name avatar location rating")
+
+        res.status(200).json(updatedListing)
+
     }
     catch(err){
         res.status(500).json({message:'Server error',error:err.message});

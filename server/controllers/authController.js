@@ -20,7 +20,7 @@ exports.register = async(req,res)=>{
             email,
             password:hashedPassword,
         })
-
+        
         const token = jwt.sign(
             {id:user._id},
             process.env.JWT_SECRET,
