@@ -2,9 +2,10 @@ const SkillListing = require('../models/SkillListing');
 
 exports.createListing = async (req, res) => {
   try {
-    const { title, description, category, skillName } = req.body;
+    const { title, description, category, skillName, proficiencyWanted } = req.body;
     const listing = await SkillListing.create({
       title, description, category, skillName,
+      proficiencyWanted: proficiencyWanted || 'Beginner',
       postedBy: req.user.id,
     });
     res.status(201).json(listing);
@@ -12,6 +13,7 @@ exports.createListing = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
 
 exports.getAllListings = async (req, res) => {
   try {

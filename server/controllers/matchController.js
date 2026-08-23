@@ -1,4 +1,30 @@
 const Match = require('../models/Match');
+const User = require('../models/User');
+
+// io is injected from server.js so we can emit real-time notifications
+let _io = null;
+exports.setIo = (io) => { _io = io; };
+
+// Helper: save notification to DB + emit real-time event to the user's personal socket room
+const notify = async (userId, message, link = '/matches') => {
+  const notif = { message, link, read: false, createdAt: new Date() };
+
+  // Persist to DB
+  await User.findByIdAndUpdate(userId, {
+    $push: {
+      notifications: {
+        $each: [notif],
+        $position: 0,   // newest first
+        $slice: 20,     // keep max 20
+      },
+    },
+  });
+
+  // Emit real-time to user's personal room (userId string)
+  if (_io) {
+    _io.to(userId.toString()).emit('notification', notif);
+  }
+};
 
 exports.sendMatchRequest = async (req, res) => {
   try {
@@ -25,6 +51,14 @@ exports.sendMatchRequest = async (req, res) => {
       skillWanted,
       listing: listingId,
     });
+
+    // Notify the receiver in real-time
+    const sender = await User.findById(req.user.id).select('name');
+    await notify(
+      receiverId,
+      `🔔 ${sender.name} sent you a swap request! They offer "${skillOffered}" and want "${skillWanted}". You have 3 days to respond.`,
+      '/matches'
+    );
 
     res.status(201).json(match);
   } catch (err) {
@@ -67,14 +101,30 @@ exports.updateMatchStatus = async (req, res) => {
       return res.status(400).json({ message: 'Match already responded to' });
     }
 
-    match.status = status;
-    await match.save();
+    // Use $set + $unset in one atomic update to avoid the TTL field being saved as null
+    const updated = await Match.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: { status },
+        $unset: { expiresAt: '' }, // properly remove the TTL field so MongoDB won't auto-delete
+      },
+      { new: true, runValidators: false }
+    );
 
-    res.status(200).json(match);
+    // Notify the original sender in real-time
+    const receiver = await User.findById(req.user.id).select('name');
+    const notifMsg = status === 'accepted'
+      ? `✅ ${receiver.name} accepted your swap request! Open the chat to get started.`
+      : `❌ ${receiver.name} declined your swap request.`;
+    await notify(match.sender, notifMsg, '/matches');
+
+    res.status(200).json(updated);
   } catch (err) {
+    console.error('[updateMatchStatus] Error:', err.message);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
 
 exports.deleteMatch = async (req, res) => {
   try {

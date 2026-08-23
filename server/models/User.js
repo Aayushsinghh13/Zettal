@@ -1,4 +1,6 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
+
+const LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
 
 const userSchema = new mongoose.Schema(
   {
@@ -7,12 +9,27 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true, minlength: 6 },
     bio: { type: String, default: '', maxlength: 300 },
     avatar: { type: String, default: '' },
-    skillsOffered: [String],
+    // Skills now stored as objects with name + proficiency level
+    skillsOffered: [
+      {
+        name: { type: String, required: true, trim: true },
+        level: { type: String, enum: LEVELS, default: 'Beginner' },
+      },
+    ],
     location: { type: String, default: '' },
     rating: { type: Number, default: 0 },
+    // In-app notifications array (latest first)
+    notifications: [
+      {
+        message: { type: String, required: true },
+        link: { type: String, default: '/matches' },
+        read: { type: Boolean, default: false },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );
 
-const User = mongoose.model("User", userSchema);
+const User = mongoose.model('User', userSchema);
 module.exports = User;

@@ -8,7 +8,8 @@ exports.getAllUsers = async (req, res) => {
     const { skill, location } = req.query;
 
     let query = {};
-    if (skill) query.skillsOffered = { $regex: skill, $options: 'i' };
+    // Now skillsOffered is an array of objects; search by skill name
+    if (skill) query['skillsOffered.name'] = { $regex: skill, $options: 'i' };
     if (location) query.location = { $regex: location, $options: 'i' };
 
     const users = await User.find(query).skip(offset).limit(limit).select('-password');
@@ -64,11 +65,33 @@ exports.deleteUser = async (req, res) => {
     if (req.user.id !== req.params.id) {
       return res.status(403).json({ message: 'Not authorized to delete this account' });
     }
-
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
-
     res.status(200).json({ message: 'Account deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// GET /api/users/notifications — fetch logged-in user's notifications
+exports.getNotifications = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('notifications');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.status(200).json(user.notifications);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// PATCH /api/users/notifications/read-all — mark all as read
+exports.markNotificationsRead = async (req, res) => {
+  try {
+    await User.updateOne(
+      { _id: req.user.id },
+      { $set: { 'notifications.$[].read': true } }
+    );
+    res.status(200).json({ message: 'All notifications marked as read' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
