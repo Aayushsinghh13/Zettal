@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Camera, Save, Plus, Loader, MapPin } from 'lucide-react';
+import { Camera, Save, Plus, Loader, MapPin, ChevronDown } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import UserAvatar from '../components/UserAvatar';
 import SkillBadge from '../components/SkillBadge';
@@ -9,17 +9,20 @@ import { useAuth } from '../context/AuthContext';
 import { updateMe } from '../api/users';
 import { createListing, deleteListing, getAllListings } from '../api/skills';
 
+const LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
+
 export default function Profile() {
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ name: '', bio: '', location: '' });
-  const [skills, setSkills] = useState([]);
+  const [skills, setSkills] = useState([]);           // [{name, level}]
   const [skillInput, setSkillInput] = useState('');
+  const [skillLevel, setSkillLevel] = useState('Beginner');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [listings, setListings] = useState([]);
-  const [newListing, setNewListing] = useState({ title: '', description: '', category: '', skillName: '' });
+  const [newListing, setNewListing] = useState({ title: '', description: '', category: '', skillName: '', proficiencyWanted: 'Beginner' });
   const [showListingForm, setShowListingForm] = useState(false);
 
   useEffect(() => {
@@ -49,7 +52,9 @@ export default function Profile() {
 
   const addSkill = () => {
     const t = skillInput.trim();
-    if (t && !skills.includes(t)) setSkills((p) => [...p, t]);
+    if (t && !skills.find((s) => s.name === t)) {
+      setSkills((p) => [...p, { name: t, level: skillLevel }]);
+    }
     setSkillInput('');
   };
 
@@ -124,13 +129,20 @@ export default function Profile() {
               <div className="flex gap-3 mb-4">
                 <input type="text" value={skillInput} onChange={(e) => setSkillInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-                  placeholder="Type a skill and press Enter…" className="flex-1 px-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 font-medium placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all" />
+                  placeholder="Type a skill…" className="flex-1 px-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 font-medium placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all" />
+                <div className="relative">
+                  <select value={skillLevel} onChange={(e) => setSkillLevel(e.target.value)}
+                    className="appearance-none px-4 py-3 pr-8 rounded-xl bg-white border border-slate-300 text-slate-900 font-semibold shadow-sm focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all cursor-pointer">
+                    {LEVELS.map((l) => <option key={l}>{l}</option>)}
+                  </select>
+                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
                 <button onClick={addSkill} className="px-5 py-3 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors shadow-sm font-semibold flex items-center gap-2">
                   <Plus size={16} /> Add
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
-                {skills.map((s) => <SkillBadge key={s} label={s} removable onRemove={() => setSkills(skills.filter((x) => x !== s))} />)}
+                {skills.map((s) => <SkillBadge key={s.name} label={s.name} level={s.level} removable onRemove={() => setSkills(skills.filter((x) => x.name !== s.name))} />)}
               </div>
             </div>
 
@@ -165,9 +177,17 @@ export default function Profile() {
                 onChange={(e) => setNewListing({ ...newListing, description: e.target.value })} className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 font-medium placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all resize-none" />
               <div className="grid sm:grid-cols-2 gap-4">
                 <input type="text" placeholder="Category (e.g. Programming)" value={newListing.category}
-                  onChange={(e) => setNewListing({ ...newListing, category: e.target.value })} className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 font-medium placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all" />
-                <input type="text" placeholder="Specific Skill (e.g. React.js)" value={newListing.skillName}
-                  onChange={(e) => setNewListing({ ...newListing, skillName: e.target.value })} className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 font-medium placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all" />
+                onChange={(e) => setNewListing({ ...newListing, category: e.target.value })} className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 font-medium placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all" />
+              <input type="text" placeholder="Specific Skill (e.g. React.js)" value={newListing.skillName}
+                onChange={(e) => setNewListing({ ...newListing, skillName: e.target.value })} className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 font-medium placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all" />
+              <div className="relative">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-2">Proficiency Needed</label>
+                <select value={newListing.proficiencyWanted} onChange={(e) => setNewListing({ ...newListing, proficiencyWanted: e.target.value })}
+                  className="w-full appearance-none px-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 font-semibold shadow-sm focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all">
+                  {LEVELS.map((l) => <option key={l}>{l}</option>)}
+                </select>
+                <ChevronDown size={14} className="absolute right-3 bottom-3.5 text-slate-400 pointer-events-none" />
+              </div>
               </div>
               <div className="flex gap-3 pt-2">
                 <button onClick={handlePostListing} className="btn-primary text-sm py-2.5 px-6 shadow-sm hover:-translate-y-0.5">Post Listing</button>
