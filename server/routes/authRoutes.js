@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
-const { register, login, registerValidation, loginValidation } = require('../controllers/authController');
+const { register, login, googleAuth, registerValidation, loginValidation } = require('../controllers/authController');
 
 // Rate limiter: max 10 auth attempts per 15 minutes per IP
 const authLimiter = rateLimit({
@@ -14,5 +14,6 @@ const authLimiter = rateLimit({
 
 router.post('/register', authLimiter, registerValidation, register);
 router.post('/login',    authLimiter, loginValidation,    login);
+router.post('/google',   authLimiter, googleAuth);
 
 module.exports = router;

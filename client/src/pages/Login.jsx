@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, Zap } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { loginUser } from '../api/auth';
 
@@ -12,7 +13,20 @@ export default function Login() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError(null);
+    setLoading(true);
+    try {
+      await loginWithGoogle(credentialResponse.credential);
+      navigate('/browse');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Google login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -125,6 +139,24 @@ export default function Login() {
               ) : 'Log in'}
             </button>
           </form>
+
+          <div className="mt-8 flex items-center gap-4">
+            <div className="flex-1 h-px bg-slate-200" />
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Or continue with</p>
+            <div className="flex-1 h-px bg-slate-200" />
+          </div>
+
+          <div className="mt-6 flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError('Google Login Failed')}
+              shape="rectangular"
+              size="large"
+              width="300"
+              theme="outline"
+              text="continue_with"
+            />
+          </div>
         </motion.div>
       </div>
     </div>

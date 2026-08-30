@@ -38,10 +38,21 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
   };
 
+  const loginWithGoogle = async (token) => {
+    try {
+      const res = await api.post('/auth/google', { token });
+      login(res.data.token, res.data.user);
+      return res;
+    } catch (err) {
+      throw err;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
   };
+
 
   // Don't render children until we know if user is logged in
   // This prevents a flash of the login page on refresh
@@ -55,7 +66,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, setUser }}>
+    <AuthContext.Provider value={{ user, login, loginWithGoogle, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );
