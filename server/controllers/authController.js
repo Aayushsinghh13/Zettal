@@ -2,6 +2,10 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
+const { OAuth2Client } = require('google-auth-library');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
 
 // ── Validation rules (exported so routes can use them as middleware) ──
 exports.registerValidation = [
@@ -98,5 +102,29 @@ exports.login = async (req, res) => {
   } catch (err) {
     console.error('[login] Error:', err.message);
     res.status(500).json({ error: 'Login failed. Please try again.' });
+  }
+};
+
+exports.googleAuth = async (req, res) => {
+  try {
+    const { token } = req.body;
+    const ticket = await client.verifyIdToken({ idToken: token, audience: process.env.GOOGLE_CLIENT_ID });
+    const payload = ticket.getPayload();
+    const { sub, email, name, picture } = payload;
+
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({ name, email, googleId: sub, avatar: picture });
+    } else if (!user.googleId) {
+      user.googleId = sub;
+      if (!user.avatar) user.avatar = picture;
+      await user.save();
+    }
+
+    const jwtToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.status(200).json({ token: jwtToken, user: { id: user._id, name: user.name, email: user.email, bio: user.bio, location: user.location, skillsOffered: user.skillsOffered, avatar: user.avatar } });
+  } catch (err) {
+    console.error('[googleAuth] Error:', err.message);
+    res.status(500).json({ error: 'Google authentication failed.' });
   }
 };

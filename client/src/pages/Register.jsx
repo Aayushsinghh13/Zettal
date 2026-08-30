@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, Eye, EyeOff, MapPin, Plus, Zap } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import SkillBadge from '../components/SkillBadge';
 import { useAuth } from '../context/AuthContext';
 import { registerUser } from '../api/auth';
@@ -13,9 +14,21 @@ export default function Register() {
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError(null);
+    setLoading(true);
+    try {
+      await loginWithGoogle(credentialResponse.credential);
+      navigate('/browse');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Google login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -204,6 +217,24 @@ export default function Register() {
               ) : 'Create Account'}
             </button>
           </form>
+
+          <div className="mt-8 flex items-center gap-4">
+            <div className="flex-1 h-px bg-slate-200" />
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Or sign up with</p>
+            <div className="flex-1 h-px bg-slate-200" />
+          </div>
+
+          <div className="mt-6 flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError('Google Sign Up Failed')}
+              shape="rectangular"
+              size="large"
+              width="300"
+              theme="outline"
+              text="continue_with"
+            />
+          </div>
 
           <p className="mt-8 text-center text-xs font-medium text-slate-400">
             By signing up, you agree to our Terms of Service.
