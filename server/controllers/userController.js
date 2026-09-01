@@ -54,7 +54,19 @@ exports.getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
-    res.status(200).json(user);
+    
+    // Transform to match login response format
+    const userData = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      bio: user.bio,
+      location: user.location,
+      skillsOffered: user.skillsOffered,
+      avatar: user.avatar,
+    };
+    
+    res.status(200).json(userData);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }

@@ -91,6 +91,35 @@ io.on('connection', (socket) => {
   });
 
   // ---------------------------------------------------------------
+  // WebRTC Signaling Events
+  // ---------------------------------------------------------------
+  socket.on('call-user', (data) => {
+    // data = { userToCall, signalData, from, name, matchId }
+    io.to(data.userToCall).emit('incoming-call', {
+      signal: data.signalData,
+      from: data.from,
+      name: data.name,
+      matchId: data.matchId
+    });
+  });
+
+  socket.on('answer-call', (data) => {
+    // data = { to, signal }
+    io.to(data.to).emit('call-accepted', data.signal);
+  });
+
+  socket.on('end-call', (data) => {
+    // data = { to }
+    io.to(data.to).emit('call-ended');
+  });
+
+  socket.on('decline-call', (data) => {
+    // data = { to }
+    io.to(data.to).emit('call-declined');
+  });
+
+
+  // ---------------------------------------------------------------
   // Event: send-message
   // The client fires this when the user clicks "Send".
   // We receive the data, save it to MongoDB, then broadcast it
