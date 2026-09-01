@@ -23,11 +23,10 @@ export default function Navbar() {
       .catch(() => {});
   }, [user]);
 
-  // Join personal socket room + listen for real-time notifications
+  // Listen for real-time notifications
   useEffect(() => {
     if (!user || !socketRef.current) return;
     const socket = socketRef.current;
-    socket.emit('join-user-room', user.id);
 
     const handleNotif = (notif) => {
       setNotifs((prev) => [notif, ...prev].slice(0, 20));

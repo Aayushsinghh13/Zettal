@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Send, Video } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import UserAvatar from '../components/UserAvatar';
@@ -23,12 +23,12 @@ export default function Messages() {
   const socketRef = useSocket();
 
   const [acceptedMatches, setAcceptedMatches] = useState([]);
-  const [activeMatchId, setActiveMatchId]     = useState(null);
-  const [messages, setMessages]               = useState([]);
-  const [text, setText]                       = useState('');
-  const [loadingMatches, setLoadingMatches]   = useState(true);
+  const [activeMatchId, setActiveMatchId] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [text, setText] = useState('');
+  const [loadingMatches, setLoadingMatches] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
-  const [typingUser, setTypingUser]           = useState(null); // name of user typing
+  const [typingUser, setTypingUser]           = useState(null);
   const [isTyping, setIsTyping]               = useState(false);
   const bottomRef = useRef(null);
   const typingTimeout = useRef(null);
@@ -79,6 +79,9 @@ export default function Messages() {
     };
   }, [activeMatchId, socketRef.current]);
 
+
+  // (Incoming call is handled globally by GlobalCallListener)
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typingUser]);
@@ -99,9 +102,9 @@ export default function Messages() {
     const trimmed = text.trim();
     if (!trimmed || !socketRef.current || !activeMatchId) return;
     socketRef.current.emit('send-message', {
-      matchId:  activeMatchId,
+      matchId: activeMatchId,
       senderId: user.id,
-      text:     trimmed,
+      text: trimmed,
     });
     setText('');
     setIsTyping(false);
@@ -110,6 +113,8 @@ export default function Messages() {
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   };
+
+  // Global socket listener for incoming calls is now handled by GlobalCallListener.jsx
 
   const activeMatch = acceptedMatches.find((m) => m._id === activeMatchId);
   const otherUser = activeMatch
@@ -161,9 +166,8 @@ export default function Messages() {
                 <button
                   key={match._id}
                   onClick={() => setActiveMatchId(match._id)}
-                  className={`w-full flex items-center gap-3 p-3 text-left transition-all rounded-2xl ${
-                    isActive ? 'bg-primary-50 ring-1 ring-primary-100' : 'hover:bg-slate-50'
-                  }`}
+                  className={`w-full flex items-center gap-3 p-3 text-left transition-all rounded-2xl ${isActive ? 'bg-primary-50 ring-1 ring-primary-100' : 'hover:bg-slate-50'
+                    }`}
                 >
                   <UserAvatar name={other?.name} avatar={other?.avatar} size="sm" />
                   <div className="flex-1 min-w-0">
@@ -183,17 +187,28 @@ export default function Messages() {
         {/* ── Right: chat window ───────────────────────────────── */}
         <div className="flex-1 bg-white rounded-3xl overflow-hidden flex flex-col min-h-[500px] border border-slate-200/60 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
           {/* Chat header */}
-          <div className="flex items-center gap-4 p-6 border-b border-slate-100 bg-white z-10">
-            <button onClick={() => navigate('/matches')} className="text-slate-400 hover:text-slate-900 transition-colors bg-slate-50 p-2 rounded-xl">
-              <ArrowLeft size={18} />
-            </button>
-            {otherUser && <UserAvatar name={otherUser.name} avatar={otherUser.avatar} size="md" />}
-            <div>
-              <p className="font-extrabold text-slate-900 text-base leading-tight">{otherUser?.name}</p>
-              <p className="text-xs font-bold text-emerald-500 uppercase tracking-wide mt-0.5">
-                {typingUser ? `${typingUser} is typing…` : 'Active now'}
-              </p>
+          <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-white z-10">
+            <div className="flex items-center gap-4">
+              <button onClick={() => navigate('/matches')} className="text-slate-400 hover:text-slate-900 transition-colors bg-slate-50 p-2 rounded-xl">
+                <ArrowLeft size={18} />
+              </button>
+              {otherUser && <UserAvatar name={otherUser.name} avatar={otherUser.avatar} size="md" />}
+              <div>
+                <p className="font-extrabold text-slate-900 text-base leading-tight">{otherUser?.name}</p>
+                <p className="text-xs font-bold text-emerald-500 uppercase tracking-wide mt-0.5">
+                  {typingUser ? `${typingUser} is typing…` : 'Active now'}
+                </p>
+              </div>
             </div>
+            
+            {/* Video Call Button */}
+            <button
+              onClick={() => navigate(`/call/${activeMatchId}`, { state: { isInitiator: true, calleeId: otherUser?._id } })}
+              className="w-10 h-10 flex items-center justify-center bg-primary-50 text-primary-600 rounded-full hover:bg-primary-100 transition-colors shadow-sm"
+              title="Start Video Call"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+            </button>
           </div>
 
           {/* Messages area */}
@@ -236,11 +251,10 @@ export default function Messages() {
                             </div>
                           )}
                           <div className={`group max-w-xs lg:max-w-md`}>
-                            <div className={`px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
-                              isMine
+                            <div className={`px-4 py-2.5 text-sm leading-relaxed shadow-sm ${isMine
                                 ? 'bg-primary-600 text-white rounded-2xl rounded-br-sm'
                                 : 'bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-bl-sm'
-                            }`}>
+                              }`}>
                               {msg.text}
                             </div>
                             {isLastInGroup && (

@@ -58,14 +58,23 @@ export default function Profile() {
     setSkillInput('');
   };
 
+  const [listingError, setListingError] = useState(null);
+
   const handlePostListing = async () => {
+    setListingError(null);
+    if (!newListing.title || !newListing.description || !newListing.category || !newListing.skillName) {
+      setListingError('Please fill out all fields.');
+      return;
+    }
+    
     try {
       const res = await createListing(newListing);
       setListings((p) => [res.data, ...p]);
-      setNewListing({ title: '', description: '', category: '', skillName: '' });
+      setNewListing({ title: '', description: '', category: '', skillName: '', proficiencyWanted: 'Beginner' });
       setShowListingForm(false);
     } catch (err) {
       console.error(err);
+      setListingError(err.response?.data?.error || err.response?.data?.message || 'Failed to post listing.');
     }
   };
 
@@ -189,6 +198,7 @@ export default function Profile() {
                 <ChevronDown size={14} className="absolute right-3 bottom-3.5 text-slate-400 pointer-events-none" />
               </div>
               </div>
+              {listingError && <p className="text-sm text-red-600 font-medium">{listingError}</p>}
               <div className="flex gap-3 pt-2">
                 <button onClick={handlePostListing} className="btn-primary text-sm py-2.5 px-6 shadow-sm hover:-translate-y-0.5">Post Listing</button>
                 <button onClick={() => setShowListingForm(false)} className="px-6 py-2.5 rounded-xl text-slate-600 font-semibold hover:bg-slate-100 transition-colors">Cancel</button>
