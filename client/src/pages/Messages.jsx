@@ -118,7 +118,9 @@ export default function Messages() {
 
   const activeMatch = acceptedMatches.find((m) => m._id === activeMatchId);
   const otherUser = activeMatch
-    ? activeMatch.sender?._id === user?.id ? activeMatch.receiver : activeMatch.sender
+    ? (activeMatch.sender?._id?.toString() || activeMatch.sender?.toString()) === user?.id
+      ? activeMatch.receiver
+      : activeMatch.sender
     : null;
 
   if (loadingMatches) return <><Navbar /><div className="py-32 flex justify-center"><LoadingSpinner /></div></>;
@@ -160,7 +162,8 @@ export default function Messages() {
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-1">
             {acceptedMatches.map((match) => {
-              const other = match.sender?._id === user?.id ? match.receiver : match.sender;
+              const matchSenderId = match.sender?._id?.toString() || match.sender?.toString();
+              const other = matchSenderId === user?.id ? match.receiver : match.sender;
               const isActive = match._id === activeMatchId;
               return (
                 <button
@@ -207,7 +210,7 @@ export default function Messages() {
               className="w-10 h-10 flex items-center justify-center bg-primary-50 text-primary-600 rounded-full hover:bg-primary-100 transition-colors shadow-sm"
               title="Start Video Call"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+              <Video size={20} />
             </button>
           </div>
 

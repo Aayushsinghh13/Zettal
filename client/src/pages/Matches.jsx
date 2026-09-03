@@ -158,7 +158,8 @@ export default function Matches() {
           <div className="space-y-4">
             <AnimatePresence>
               {filtered.map((match) => {
-                const isSender   = match.sender?._id === user?.id;
+                const senderId   = match.sender?._id?.toString() || match.sender?.toString();
+                const isSender   = senderId === user?.id;
                 const otherUser  = isSender ? match.receiver : match.sender;
                 const isReceiver = !isSender;
                 const isActing   = actionLoading === match._id + 'accepted' || actionLoading === match._id + 'rejected' || actionLoading === match._id + 'delete';
