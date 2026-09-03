@@ -40,9 +40,10 @@ export default function ListingDetail() {
   useEffect(() => {
     if (user && listing) {
       getMyMatches().then((res) => {
-        const already = res.data.some(
-          (m) => m.listing?._id === id && m.sender === user.id
-        );
+        const already = res.data.some((m) => {
+          const senderId = m.sender?._id?.toString() || m.sender?.toString();
+          return m.listing?._id === id && senderId === user.id;
+        });
         if (already) setSent(true);
       }).catch(() => {});
     }

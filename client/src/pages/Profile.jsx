@@ -39,8 +39,14 @@ export default function Profile() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await updateMe({ ...user, ...form, skillsOffered: skills });
-      setUser(res.data);
+      const res = await updateMe({
+        id: user.id,                    // used to build the PUT URL
+        name: form.name,
+        bio: form.bio,
+        location: form.location,
+        skillsOffered: skills,
+      });
+      setUser({ ...user, ...res.data, id: user.id }); // keep id as string
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
